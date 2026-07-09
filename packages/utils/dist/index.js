@@ -23,6 +23,9 @@ function toRad(value) {
 }
 /**
  * Calculates ETA based on average speed.
+ * The architecture is designed to easily swap this out with Google Maps / Mapbox
+ * Directions API later without changing the function signature for callers.
+ *
  * @param distanceKm The remaining distance in kilometers
  * @param averageSpeedKmph Average speed of the rider in km/h (default: 25)
  * @returns ETA in minutes
@@ -33,4 +36,3 @@ function calculateEtaMinutes(distanceKm, averageSpeedKmph = 25) {
     const hours = distanceKm / averageSpeedKmph;
     return Math.ceil(hours * 60);
 }
-//# sourceMappingURL=index.js.map

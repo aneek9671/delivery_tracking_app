@@ -6,24 +6,30 @@ export interface Location {
     timestamp: number;
 }
 export interface Order {
-    id: string;
-    riderName: string;
+    orderId: string;
+    riderId?: string;
+    riderName?: string;
     status: OrderStatus;
     riderLocation?: Location;
     customerLocation?: Location;
-    locationHistory: Location[];
-    createdAt: number;
-    updatedAt: number;
-}
-export interface ServerToClientEvents {
-    'location-updated': (location: Location) => void;
-    'status-updated': (status: OrderStatus) => void;
+    distance?: number;
+    eta?: number;
+    startedAt?: number;
+    completedAt?: number;
 }
 export interface ClientToServerEvents {
     'join-order': (orderId: string) => void;
     'leave-order': (orderId: string) => void;
     'location-update': (orderId: string, location: Location) => void;
+    'customer-location': (orderId: string, location: Location) => void;
+    'trip-start': (orderId: string, riderName: string) => void;
     'trip-picked': (orderId: string) => void;
     'trip-complete': (orderId: string) => void;
 }
-//# sourceMappingURL=index.d.ts.map
+export interface ServerToClientEvents {
+    'order-updated': (order: Order) => void;
+    'location-updated': (location: Location) => void;
+    'eta-updated': (eta: number, distance: number) => void;
+    'status-updated': (status: OrderStatus) => void;
+    'error': (message: string) => void;
+}
