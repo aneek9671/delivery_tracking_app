@@ -1,0 +1,16 @@
+{
+  "name": "delivery-tracker",
+  "version": "1.0.0",
+  "description": "Real-time delivery tracker monorepo",
+  "private": true,
+  "scripts": {
+    "dev:backend": "pnpm --filter backend dev",
+    "dev:rider": "pnpm --filter rider-web dev",
+    "dev:customer": "pnpm --filter customer-web dev",
+    "dev": "pnpm -r run dev",
+    "build": "pnpm -r run build"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}

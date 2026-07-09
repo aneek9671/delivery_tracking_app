@@ -1,0 +1,35 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: apps/backend/Dockerfile
+    ports:
+      - "3001:3001"
+    environment:
+      - NODE_ENV=production
+    restart: always
+
+  customer-web:
+    build:
+      context: .
+      dockerfile: apps/customer-web/Dockerfile
+      args:
+        # Pass the public IP/domain of your GCP instance here during build
+        VITE_BACKEND_URL: ${VITE_BACKEND_URL:-http://localhost:3001}
+        VITE_GOOGLE_MAPS_API_KEY: ${VITE_GOOGLE_MAPS_API_KEY}
+    ports:
+      - "80:80"
+    restart: always
+
+  rider-web:
+    build:
+      context: .
+      dockerfile: apps/rider-web/Dockerfile
+      args:
+        VITE_BACKEND_URL: ${VITE_BACKEND_URL:-http://localhost:3001}
+        VITE_GOOGLE_MAPS_API_KEY: ${VITE_GOOGLE_MAPS_API_KEY}
+    ports:
+      - "8080:80"
+    restart: always
