@@ -14,6 +14,10 @@ const DEFAULT_CENTER = { lat: 12.9716, lng: 77.5946 };
 
 /**
  * Inner component that handles smooth panning when the rider moves.
+ * 
+ * Why a separate component?
+ * `useMap()` can only be called inside a child of <GoogleMap>. We need
+ * a separate component to access the map instance and call panTo().
  */
 function MapPanner({ riderLocation }: { riderLocation: Location }) {
   const map = useMap();

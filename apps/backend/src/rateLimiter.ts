@@ -1,54 +1,84 @@
 /**
- * Simple token-bucket rate limiter per socket per action.
- * Prevents a single client from flooding the server with events.
+ * Rate limiter for Socket.IO events.
+ *
+ * Why this exists:
+ * A rider's browser Geolocation API can fire watchPosition callbacks many times
+ * per second (especially on Android). Without server-side throttling, a single
+ * client can flood the server with location-update events, wasting CPU on
+ * repository writes and broadcasting stale data to customers.
+ *
+ * This is a per-socket, per-event sliding-window rate limiter. It tracks the
+ * last N timestamps and rejects events that exceed the configured rate.
+ *
+ * Performance note: We use a simple array-based window rather than a token
+ * bucket because the expected cardinality is tiny (one entry per event per
+ * socket) and the window sizes are small (< 20 entries).
  */
+
+interface RateLimitConfig {
+  /** Maximum number of events allowed within the window */
+  maxEvents: number;
+  /** Window size in milliseconds */
+  windowMs: number;
+}
+
 export class SocketRateLimiter {
-  private buckets: Map<string, { tokens: number; lastRefill: number }> = new Map();
-  private maxTokens: number;
-  private refillRateMs: number;
+  /** Map<socketId:eventName, timestamps[]> */
+  private windows: Map<string, number[]> = new Map();
 
-  constructor(maxTokens: number = 5, refillRateMs: number = 1000) {
-    this.maxTokens = maxTokens;
-    this.refillRateMs = refillRateMs;
-  }
+  constructor(private config: RateLimitConfig) {}
 
-  allow(socketId: string, action: string): boolean {
-    const key = `${socketId}:${action}`;
+  /**
+   * Returns true if the event should be ALLOWED, false if it should be REJECTED.
+   */
+  allow(socketId: string, eventName: string): boolean {
+    const key = `${socketId}:${eventName}`;
     const now = Date.now();
-    let bucket = this.buckets.get(key);
+    const cutoff = now - this.config.windowMs;
 
-    if (!bucket) {
-      bucket = { tokens: this.maxTokens, lastRefill: now };
-      this.buckets.set(key, bucket);
+    let timestamps = this.windows.get(key);
+    if (!timestamps) {
+      timestamps = [];
+      this.windows.set(key, timestamps);
     }
 
-    // Refill tokens based on elapsed time
-    const elapsed = now - bucket.lastRefill;
-    const tokensToAdd = Math.floor(elapsed / this.refillRateMs) * this.maxTokens;
-    if (tokensToAdd > 0) {
-      bucket.tokens = Math.min(this.maxTokens, bucket.tokens + tokensToAdd);
-      bucket.lastRefill = now;
+    // Evict expired timestamps
+    while (timestamps.length > 0 && timestamps[0] < cutoff) {
+      timestamps.shift();
     }
 
-    if (bucket.tokens > 0) {
-      bucket.tokens--;
-      return true;
+    if (timestamps.length >= this.config.maxEvents) {
+      return false; // Rate limited
     }
 
-    return false;
+    timestamps.push(now);
+    return true;
   }
 
+  /**
+   * Clean up all windows for a disconnected socket.
+   * Called on socket disconnect to prevent memory leaks.
+   */
   cleanup(socketId: string): void {
-    for (const key of this.buckets.keys()) {
+    // Delete all keys that start with this socketId
+    for (const key of this.windows.keys()) {
       if (key.startsWith(`${socketId}:`)) {
-        this.buckets.delete(key);
+        this.windows.delete(key);
       }
     }
   }
 }
 
-// Location updates: allow 5 per second (GPS typically sends 1/s)
-export const locationRateLimiter = new SocketRateLimiter(5, 1000);
+// Allow max 1 location-update per second per socket (rider sends every 2-5s,
+// so this is generous). This prevents malicious flooding without dropping
+// legitimate updates.
+export const locationRateLimiter = new SocketRateLimiter({
+  maxEvents: 2,
+  windowMs: 1000,
+});
 
-// Status updates: allow 2 per 5 seconds (button clicks)
-export const statusRateLimiter = new SocketRateLimiter(2, 5000);
+// Status changes are rare (3 per trip). Allow 5 per 10 seconds to be safe.
+export const statusRateLimiter = new SocketRateLimiter({
+  maxEvents: 5,
+  windowMs: 10_000,
+});

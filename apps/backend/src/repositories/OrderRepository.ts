@@ -1,10 +1,10 @@
-import { Order } from '@delivery-tracker/types';
+import { Order, OrderStatus } from '@delivery-tracker/types';
 
 export class OrderRepository {
   private orders: Map<string, Order> = new Map();
 
   async create(order: Order): Promise<Order> {
-    this.orders.set(order.id, order);
+    this.orders.set(order.orderId, order);
     return order;
   }
 
@@ -14,22 +14,9 @@ export class OrderRepository {
 
   async update(orderId: string, updates: Partial<Order>): Promise<Order | null> {
     const existing = this.orders.get(orderId);
-    if (!existing) {
-      // Auto-create if doesn't exist (for first location-update)
-      const newOrder: Order = {
-        id: orderId,
-        riderName: '',
-        status: 'WAITING',
-        locationHistory: [],
-        createdAt: Date.now(),
-        updatedAt: Date.now(),
-        ...updates,
-      };
-      this.orders.set(orderId, newOrder);
-      return newOrder;
-    }
+    if (!existing) return null;
 
-    const updatedOrder = { ...existing, ...updates, updatedAt: Date.now() };
+    const updatedOrder = { ...existing, ...updates };
     this.orders.set(orderId, updatedOrder);
     return updatedOrder;
   }
@@ -39,5 +26,5 @@ export class OrderRepository {
   }
 }
 
-// Export a singleton instance
+// Export a singleton instance for now
 export const orderRepository = new OrderRepository();
