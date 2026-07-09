@@ -1,0 +1,14 @@
+{
+  "name": "@delivery-tracker/types",
+  "version": "1.0.0",
+  "description": "Shared TypeScript types for delivery tracking",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0"
+  }
+}
