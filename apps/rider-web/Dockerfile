@@ -1,41 +1,33 @@
-FROM node:20-alpine AS builder
+FROM node:22-alpine AS builder
 
 # Install pnpm
 RUN corepack enable && corepack prepare pnpm@latest --activate
 
 WORKDIR /app
 
-# Copy root config and workspace config
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml tsconfig.base.json ./
 
-# Copy all packages and apps
 COPY packages/ ./packages/
-COPY apps/rider-web/ ./apps/rider-web/
-
-# Pass build args to environment variables (for VITE_)
-ARG VITE_BACKEND_URL
-ARG VITE_GOOGLE_MAPS_API_KEY
-ENV VITE_BACKEND_URL=$VITE_BACKEND_URL
-ENV VITE_GOOGLE_MAPS_API_KEY=$VITE_GOOGLE_MAPS_API_KEY
+COPY apps/backend/ ./apps/backend/
 
 RUN pnpm install --frozen-lockfile
 
-# Build the shared packages first
 RUN pnpm --filter @delivery-tracker/types build
 RUN pnpm --filter @delivery-tracker/utils build
 
-# Build the rider app
-RUN pnpm --filter rider-web build
+RUN pnpm --filter backend build
 
-# Serve with Nginx
-FROM nginx:alpine
+FROM node:22-alpine
 
-# Copy custom nginx config
-COPY apps/rider-web/nginx.conf /etc/nginx/conf.d/default.conf
+WORKDIR /app
 
-# Copy build output to nginx html dir
-COPY --from=builder /app/apps/rider-web/dist /usr/share/nginx/html
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/packages ./packages
+COPY --from=builder /app/apps/backend ./apps/backend
+COPY --from=builder /app/package.json ./package.json
 
-EXPOSE 80
+WORKDIR /app/apps/backend
 
-CMD ["nginx", "-g", "daemon off;"]
+EXPOSE 3001
+
+CMD ["npm", "start"]
