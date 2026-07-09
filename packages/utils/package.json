@@ -1,0 +1,17 @@
+{
+  "name": "@delivery-tracker/utils",
+  "version": "1.0.0",
+  "description": "Shared utility functions",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch"
+  },
+  "dependencies": {
+    "@delivery-tracker/types": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0"
+  }
+}
