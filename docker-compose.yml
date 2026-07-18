@@ -9,6 +9,9 @@ services:
       - "3001:3001"
     environment:
       - NODE_ENV=production
+      # Allow requests from both frontend containers (port 80 and 8080)
+      # Replace <YOUR_GCP_IP> with your actual public IP or domain
+      - ALLOWED_ORIGINS=${ALLOWED_ORIGINS:-http://localhost,http://localhost:8080}
     restart: always
 
   customer-web:
