@@ -64,6 +64,20 @@ export default function TrackOrderPage() {
       setStatus(newStatus);
     });
 
+    // Ask for customer location and emit it
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition((pos) => {
+        const loc = {
+          latitude: pos.coords.latitude,
+          longitude: pos.coords.longitude,
+          accuracy: pos.coords.accuracy,
+          timestamp: pos.timestamp,
+        };
+        setCustomerLocation(loc);
+        socket.emit('customer-location', orderId, loc);
+      });
+    }
+
     return () => {
       socket.emit('leave-order', orderId);
       socket.disconnect();
@@ -111,7 +125,7 @@ export default function TrackOrderPage() {
         </div>
 
         {/* Map Area */}
-        <div className="flex-1 min-h-[400px]">
+        <div className="w-full h-[400px] lg:h-[500px] rounded-xl overflow-hidden">
           <Map riderLocation={riderLocation} customerLocation={customerLocation} />
         </div>
 
