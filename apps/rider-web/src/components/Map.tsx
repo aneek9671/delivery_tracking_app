@@ -9,7 +9,6 @@ import {
 import type { Location } from '@delivery-tracker/types';
 
 const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || '';
-console.log('Customer Web Map Loaded. API Key exists?', !!GOOGLE_MAPS_API_KEY, GOOGLE_MAPS_API_KEY.substring(0, 5) + '...');
 
 // Default to Bangalore center if no location yet
 const DEFAULT_CENTER = { lat: 12.9716, lng: 77.5946 };

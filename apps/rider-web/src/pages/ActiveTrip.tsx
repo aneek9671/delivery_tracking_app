@@ -3,6 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { ArrowLeft, Navigation, PackageCheck, CheckCircle2, AlertTriangle } from 'lucide-react';
 import { io, Socket } from 'socket.io-client';
 import type { ClientToServerEvents, ServerToClientEvents, Location, OrderStatus } from '@delivery-tracker/types';
+import Map from '../components/Map';
 
 export default function ActiveTrip() {
   const { orderId } = useParams<{ orderId: string }>();
@@ -10,6 +11,7 @@ export default function ActiveTrip() {
   const [locationError, setLocationError] = useState<string | null>(null);
   const [connected, setConnected] = useState(false);
   const [currentLoc, setCurrentLoc] = useState<Location | null>(null);
+  const [customerLoc, setCustomerLoc] = useState<Location | null>(null);
 
   const socketRef = useRef<Socket<ServerToClientEvents, ClientToServerEvents> | null>(null);
   const watchIdRef = useRef<number | null>(null);
@@ -20,6 +22,16 @@ export default function ActiveTrip() {
 
   useEffect(() => {
     if (!orderId) return;
+
+    // 0. Fetch order details to get customer destination
+    fetch(`${import.meta.env.VITE_BACKEND_URL || 'http://localhost:3001'}/trip/${orderId}`)
+      .then(res => res.json())
+      .then(data => {
+        if (data.order && data.order.customerLocation) {
+          setCustomerLoc(data.order.customerLocation);
+        }
+      })
+      .catch(console.error);
 
     // 1. Connect Socket — only once per orderId
     const socket: Socket<ServerToClientEvents, ClientToServerEvents> = io(
@@ -126,19 +138,8 @@ export default function ActiveTrip() {
           </div>
 
           {currentLoc && (
-            <div className="grid grid-cols-2 gap-4 bg-dark-900 rounded-xl p-4 border border-dark-700">
-              <div>
-                <p className="text-xs text-dark-400 mb-1">Coordinates</p>
-                <p className="text-sm text-white font-mono">
-                  {currentLoc.latitude.toFixed(4)}, {currentLoc.longitude.toFixed(4)}
-                </p>
-              </div>
-              <div>
-                <p className="text-xs text-dark-400 mb-1">Accuracy</p>
-                <p className="text-sm text-white font-mono">
-                  ±{Math.round(currentLoc.accuracy)}m
-                </p>
-              </div>
+            <div className="h-64 mt-4 w-full rounded-xl overflow-hidden">
+              <Map riderLocation={currentLoc} customerLocation={customerLoc || undefined} />
             </div>
           )}
         </div>
