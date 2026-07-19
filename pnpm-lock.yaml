@@ -84,6 +84,9 @@ importers:
         specifier: ^4.7.5
         version: 4.8.3
     devDependencies:
+      '@types/google.maps':
+        specifier: ^3.65.2
+        version: 3.65.2
       '@types/node':
         specifier: ^24.13.2
         version: 24.13.2
@@ -139,6 +142,9 @@ importers:
         specifier: ^4.7.5
         version: 4.8.3
     devDependencies:
+      '@types/google.maps':
+        specifier: ^3.65.2
+        version: 3.65.2
       '@types/node':
         specifier: ^24.13.2
         version: 24.13.2
